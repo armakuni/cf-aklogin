@@ -1,0 +1,13 @@
+package: bitbucket.org/armakuni/cf-aklogin
+import:
+- package: github.com/olebedev/config
+- package: github.com/cloudfoundry/cli
+  version: v6.29.0
+  subpackages:
+  - cf/flags
+  - plugin
+testImport:
+- package: github.com/DATA-DOG/godog
+  version: ^0.7.3
+  subpackages:
+  - gherkin
