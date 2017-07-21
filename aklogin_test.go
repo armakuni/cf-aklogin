@@ -15,6 +15,7 @@ import (
 
 type feature struct {
 	*received
+	cmdOutput []byte
 }
 
 type received struct {
@@ -27,22 +28,23 @@ func (r *received) String() string {
 		r.login, r.target, r.user, r.org, r.space)
 }
 func (f *feature) iHaveAYMLFile(filename string, contents *gherkin.DocString) error {
-	return ioutil.WriteFile(normaliseTilde(filename), []byte(contents.Content), 0644)
+	return ioutil.WriteFile(expandTilde(filename), []byte(contents.Content), 0644)
 }
 
 func (f *feature) iRun(commands string) error {
 	command := strings.Split(commands, " ")
 	cmd := exec.Command(command[0], command[1:]...)
 	bytes, err := cmd.Output()
-	f.received, err = parseCmdOutput(bytes)
+	f.cmdOutput = bytes
 	return err
 }
 
-func (f *feature) iShouldBeLoggedIntoCFAs(target, username string) error {
-	err := assertEquals(f.received.login, true)
+func (f *feature) iShouldBeLoggedIntoCFAs(target, username string) (err error) {
+	f.received, err = parseCmdOutput(f.cmdOutput)
+	err = assertEquals(f.received.login, true)
 	err = assertEquals(f.received.target, target)
 	err = assertEquals(f.received.user, username)
-	return err
+	return
 }
 
 func (f *feature) mySelectedOrgspaceShouldBeDevelopment(org, space string) error {
@@ -57,16 +59,27 @@ func (f *feature) mySelectedOrgspaceShouldAutoassigned() error {
 	return err
 }
 
+func (f *feature) theOutputShouldBe(expected *gherkin.DocString) error {
+	return assertEqualsStr(string(f.cmdOutput), expected.Content)
+}
+
 func assertEquals(actual, expected interface{}) error {
 	if expected != actual {
-		return fmt.Errorf("Expected %s, but got %s", expected, actual)
+		return fmt.Errorf("Expected '%s', but got '%s'", expected, actual)
+	}
+	return nil
+}
+
+func assertEqualsStr(actual, expected string) error {
+	if expected != strings.TrimRight(actual, "\n") {
+		return fmt.Errorf("Expected '%s', but got '%s'", expected, actual)
 	}
 	return nil
 }
 
 func assertNotEquals(actual, expected interface{}) error {
 	if expected == actual {
-		return fmt.Errorf("Expected %s, but got %s", expected, actual)
+		return fmt.Errorf("Expected '%s', but got '%s'", expected, actual)
 	}
 	return nil
 }
@@ -103,7 +116,7 @@ func FeatureContext(s *godog.Suite) {
 
 	s.AfterScenario(func(interface{}, error) {
 		os.Remove("foo.yml")
-		os.Remove(normaliseTilde("~/bar.yml"))
+		os.Remove(expandTilde("~/bar.yml"))
 	})
 
 	s.Step(`^I have a YML file "([^"]*)":$`, f.iHaveAYMLFile)
@@ -111,4 +124,5 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I should be logged into "([^"]*)" CF as "([^"]*)"$`, f.iShouldBeLoggedIntoCFAs)
 	s.Step(`^my selected org\/space should be "([^"]*)"\/"([^"]*)"$`, f.mySelectedOrgspaceShouldBeDevelopment)
 	s.Step(`^my selected org\/space should auto-assigned$`, f.mySelectedOrgspaceShouldAutoassigned)
+	s.Step(`^the output should be:$`, f.theOutputShouldBe)
 }
