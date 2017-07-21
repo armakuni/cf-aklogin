@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	"github.com/cloudfoundry/cli/cf/flags"
 	"github.com/cloudfoundry/cli/plugin"
@@ -22,7 +24,7 @@ func (ak *AKLoginPlugin) GetMetadata() plugin.PluginMetadata {
 		Name: "aklogin",
 		Version: plugin.VersionType{
 			Major: 1,
-			Minor: 0,
+			Minor: 1,
 			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{
@@ -62,15 +64,31 @@ func (ak *AKLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) 
 		}
 		fmt.Printf("Using profile: '%s'\n", profile)
 
-		yml := fc.String("filename")
-		cfg, err := config.ParseYamlFile(yml)
+		yml, _ := ioutil.ReadFile(fc.String("filename"))
+		cfg, err := config.ParseYamlBytes(yml)
+		if err != nil {
+			exit1(err.Error())
+		}
+
+		include, err := cfg.Get("include")
+		if err == nil {
+			includes, _ := include.List("")
+			for _, path := range includes {
+				iyml, err := ioutil.ReadFile(normaliseTilde(path.(string)))
+				if err == nil {
+					yml = append(append(yml, 0x0a), iyml...) // 0x0a == "\n"
+				}
+			}
+		}
+
+		cfg, err = config.ParseYamlBytes(yml)
 		if err != nil {
 			exit1(err.Error())
 		}
 
 		activeConfig, err := cfg.Get(profile)
 		if err != nil {
-			exit1(fmt.Sprintf("Profile not found using '%s'.", yml))
+			exit1(fmt.Sprintf("Profile not found."))
 		}
 
 		target, err := activeConfig.String("target")
@@ -121,12 +139,19 @@ func parseArguments(args []string) (flags.FlagContext, error) {
 	return fc, fc.Parse(args...)
 }
 
+func normaliseTilde(filename string) string {
+	if filename[:2] == "~/" {
+		filename = filepath.Join(os.Getenv("HOME"), filename[2:])
+	}
+	return filename
+}
+
 func exit1(err string) {
 	fmt.Println(err)
 	os.Exit(1)
 }
 
 func main() {
-	defaultYML = fmt.Sprintf("%s/.cflogin.yml", os.Getenv("HOME"))
+	defaultYML = normaliseTilde("~/.cflogin.yml")
 	plugin.Start(new(AKLoginPlugin))
 }

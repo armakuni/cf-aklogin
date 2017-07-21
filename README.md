@@ -15,6 +15,8 @@ _Note: If you get `persmission denied`, run `chmod +x ~/Downloads/cf-aklogin`._
 
 Create `~/.cflogin.yml`:
     
+    include: //optional
+    - ~/bar.yml
     foo:
       target: api.run.pivotal.io
       username: <username>
@@ -30,7 +32,9 @@ And then run:
 
 Or with your own `foo.yml`:
 
-    bar:
+    include: //optional
+    - ~/bar.yml
+    foo:
       target: api.run.pivotal.io
       username: <username>
       password: <password>

@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -28,10 +27,7 @@ func (r *received) String() string {
 		r.login, r.target, r.user, r.org, r.space)
 }
 func (f *feature) iHaveAYMLFile(filename string, contents *gherkin.DocString) error {
-	if filename[:2] == "~/" {
-		filename = filepath.Join(os.Getenv("HOME"), filename[2:])
-	}
-	return ioutil.WriteFile(filename, []byte(contents.Content), 0644)
+	return ioutil.WriteFile(normaliseTilde(filename), []byte(contents.Content), 0644)
 }
 
 func (f *feature) iRun(commands string) error {
@@ -77,17 +73,29 @@ func assertNotEquals(actual, expected interface{}) error {
 
 func parseCmdOutput(b []byte) (*received, error) {
 	s := string(b)
+	if strings.Contains(s, "Profile not found.") {
+		return nil, errors.New("Profile not found.")
+	}
+
 	if strings.Contains(s, "is not a registered command") {
 		return nil, errors.New("Install the plugin first.")
 	}
 
 	return &received{
 		login:  regexp.MustCompile(`(?m)^Authenticating.+\nOK$`).Match(b),
-		target: regexp.MustCompile(`http?s://([\w.]+)`).FindStringSubmatch(s)[1],
-		user:   regexp.MustCompile(`User:\s+([\w.@]+)`).FindStringSubmatch(s)[1],
-		org:    regexp.MustCompile(`Org:\s+([\w.-]+)`).FindStringSubmatch(s)[1],
-		space:  regexp.MustCompile(`Space:\s+([\w.-]+)`).FindStringSubmatch(s)[1],
+		target: extractGroupIfMatch(`http?s://([\w.]+)`, s),
+		user:   extractGroupIfMatch(`User:\s+([\w.@]+)`, s),
+		org:    extractGroupIfMatch(`Org:\s+([\w.-]+)`, s),
+		space:  extractGroupIfMatch(`Space:\s+([\w.-]+)`, s),
 	}, nil
+}
+
+func extractGroupIfMatch(regex, src string) string {
+	matches := regexp.MustCompile(regex).FindStringSubmatch(src)
+	if len(matches) >= 2 {
+		return matches[1]
+	}
+	return ""
 }
 
 func FeatureContext(s *godog.Suite) {
@@ -95,6 +103,7 @@ func FeatureContext(s *godog.Suite) {
 
 	s.AfterScenario(func(interface{}, error) {
 		os.Remove("foo.yml")
+		os.Remove(normaliseTilde("~/bar.yml"))
 	})
 
 	s.Step(`^I have a YML file "([^"]*)":$`, f.iHaveAYMLFile)
