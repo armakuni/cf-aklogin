@@ -62,3 +62,43 @@ Feature: CF Login tool
     When I run "cf aklogin bar"
     Then I should be logged into "api.run.pivotal.io" CF as "adrian.fedoreanu@armakuni.com"
     And my selected org/space should auto-assigned
+
+  Scenario: I can list all available profiles with includes
+    Given I have a YML file "~/.cflogin.yml":
+    """
+    include:
+    - ~/bar.yml
+    foo:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
+    And I have a YML file "~/bar.yml":
+    """
+    bar:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
+    When I run "cf aklogin --list"
+    Then the output should be:
+    """
+    Available profiles:
+    0. bar
+    1. foo
+    Select profile: Using profile: 'bar'
+    API endpoint: api.run.pivotal.io
+    Authenticating...
+    OK
+
+    Targeted org adrian-fedoreanu-armakuni
+
+    Targeted space development
+
+
+
+    API endpoint:   https://api.run.pivotal.io (API version: 2.89.0)
+    User:           adrian.fedoreanu@armakuni.com
+    Org:            adrian-fedoreanu-armakuni
+    Space:          development
+    """

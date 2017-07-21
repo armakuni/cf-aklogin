@@ -13,6 +13,8 @@ _Note: If you get `persmission denied`, run `chmod +x ~/Downloads/cf-aklogin`._
 
 ### Usage
 
+#### Login
+
 Create `~/.cflogin.yml`:
     
     include: //optional
@@ -43,6 +45,26 @@ Or with your own `foo.yml`:
 
     $ cf aklogin -f foo.yml bar
 
+#### List
+
+    $ cf aklogin -h
+    NAME:
+       aklogin - CF login via profiles
+    
+    USAGE:
+       cf aklogin [options] <profile>
+    
+    OPTIONS:
+       --filename       YML config file path
+       --list           List available profiles
+
+    $ cf aklogin --list
+    Available profiles:
+    0. ak
+    1. bar    
+    2. foo
+    Select profile: _
+        
 ### Tests
 
     $ godog
