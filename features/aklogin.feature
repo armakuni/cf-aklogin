@@ -5,38 +5,60 @@ Feature: CF Login tool
 
   Scenario: I can log into a CF, setting org and space
     Given I have a YML file "foo.yml":
-      """
-        foo:
-          target: api.run.pivotal.io
-          username: adrian.fedoreanu@armakuni.com
-          password: Pennies!20
-          org: adrian-fedoreanu-armakuni
-          space: development
-      """
+    """
+    foo:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+      org: adrian-fedoreanu-armakuni
+      space: development
+    """
     When I run "cf aklogin -f foo.yml foo"
     Then I should be logged into "api.run.pivotal.io" CF as "adrian.fedoreanu@armakuni.com"
     And my selected org/space should be "adrian-fedoreanu-armakuni"/"development"
 
   Scenario: I can log into a CF, with no org or space
     Given I have a YML file "foo.yml":
-      """
-        foo:
-          target: api.run.pivotal.io
-          username: adrian.fedoreanu@armakuni.com
-          password: Pennies!20
-      """
+    """
+    foo:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
     When I run "cf aklogin -f foo.yml foo"
     Then I should be logged into "api.run.pivotal.io" CF as "adrian.fedoreanu@armakuni.com"
     And my selected org/space should auto-assigned
 
   Scenario: I can log into a CF with a global YML file
     Given I have a YML file "~/.cflogin.yml":
-      """
-        foo:
-          target: api.run.pivotal.io
-          username: adrian.fedoreanu@armakuni.com
-          password: Pennies!20
-      """
+    """
+    foo:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
     When I run "cf aklogin foo"
+    Then I should be logged into "api.run.pivotal.io" CF as "adrian.fedoreanu@armakuni.com"
+    And my selected org/space should auto-assigned
+
+  Scenario: I can include multiple YML files into the global YML file
+    and I can log in into a CF with sub-profiles
+    Given I have a YML file "~/.cflogin.yml":
+    """
+    include:
+    - ~/bar.yml
+    foo:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
+    And I have a YML file "~/bar.yml":
+    """
+    bar:
+      target: api.run.pivotal.io
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
+    When I run "cf aklogin bar"
     Then I should be logged into "api.run.pivotal.io" CF as "adrian.fedoreanu@armakuni.com"
     And my selected org/space should auto-assigned
