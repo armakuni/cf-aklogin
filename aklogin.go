@@ -26,7 +26,7 @@ func (ak *AKLoginPlugin) GetMetadata() plugin.PluginMetadata {
 		Version: plugin.VersionType{
 			Major: 1,
 			Minor: 2,
-			Build: 6,
+			Build: 7,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
@@ -42,6 +42,7 @@ func (ak *AKLoginPlugin) GetMetadata() plugin.PluginMetadata {
 					Options: map[string]string{
 						"-filename": "YML config file path",
 						"-list":     "List available profiles",
+						"-version":  "Print version",
 					},
 				},
 			},
@@ -54,6 +55,14 @@ func (ak *AKLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) 
 	case "aklogin":
 		fc, err := parseArguments(args)
 		check(err)
+
+		if fc.IsSet("version") {
+			fmt.Printf("%d.%d.%d\n",
+				ak.GetMetadata().Version.Major,
+				ak.GetMetadata().Version.Minor,
+				ak.GetMetadata().Version.Build)
+			os.Exit(0)
+		}
 
 		yml, err := globalYML(fc.String("filename"))
 		check(err)
@@ -141,7 +150,8 @@ func globalYML(filename string) (*config.Config, error) {
 }
 
 func login(cliConn plugin.CliConnection, p *Profile) error {
-	output, err := cliConn.CliCommandWithoutTerminalOutput("login", "-a", p.Target,
+	output, err := cliConn.CliCommandWithoutTerminalOutput("login",
+		"-a", p.Target,
 		"-u", p.Username,
 		"-p", p.Password,
 		"-o", p.Org,
@@ -159,6 +169,7 @@ func parseArguments(args []string) (flags.FlagContext, error) {
 	fc := flags.New()
 	fc.NewStringFlagWithDefault("filename", "f", "YML config file path", defaultYML)
 	fc.NewBoolFlag("list", "l", "List available profiles")
+	fc.NewBoolFlag("version", "v", "Print version")
 	return fc, fc.Parse(args...)
 }
 
