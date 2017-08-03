@@ -7,16 +7,11 @@ A tool that will allow switching between CF environments with a single command.
 
 	$ cf install-plugin -r CF-Community "cf-aklogin"
 
-Clone the repo and run:
-	
-	$ make && make install
-
-
-[Download](https://bitbucket.org/armakuni/cf-aklogin/downloads/) the [plugin](https://bitbucket.org/armakuni/cf-aklogin/downloads/cf-aklogin) and run:
+[Download the latest plugin](https://github.com/armakuni/cf-aklogin/releases) and run:
      
-    $ cf install-plugin ~/Downloads/cf-aklogin
+    $ cf install-plugin ~/Downloads/cf-aklogin.darwin
     
-_Note: If you get `persmission denied`, run `chmod +x ~/Downloads/cf-aklogin`._
+_Note: If you get `persmission denied`, run `chmod +x ~/Downloads/cf-aklogin.darwin`._
 
 ### Usage
 
@@ -46,7 +41,7 @@ Or with your own `foo.yml`:
     foo:
       target: api.run.pivotal.io
       username: <username>
-      password: <password>
+      password: <password> // optional
       org: <org> // optional
       space: <space> // optional
 
@@ -72,9 +67,9 @@ Or with your own `foo.yml`:
     2. foo
     Select profile: _
         
-### Build 
+### Build and install
         
-    $ make
+    $ make && make install
        
 ### Tests
 
