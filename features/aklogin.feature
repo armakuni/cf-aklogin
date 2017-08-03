@@ -97,7 +97,7 @@ Feature: CF Login tool
 
 
 
-    API endpoint:   https://api.run.pivotal.io (API version: 2.89.0)
+    API endpoint:   https://api.run.pivotal.io (API version: 2.92.0)
     User:           adrian.fedoreanu@armakuni.com
     Org:            adrian-fedoreanu-armakuni
     Space:          development

@@ -5,8 +5,15 @@ A tool that will allow switching between CF environments with a single command.
 
 ### Install
 
+	$ cf install-plugin -r CF-Community "cf-aklogin"
+
+Clone the repo and run:
+	
+	$ make && make install
+
+
 [Download](https://bitbucket.org/armakuni/cf-aklogin/downloads/) the [plugin](https://bitbucket.org/armakuni/cf-aklogin/downloads/cf-aklogin) and run:
- 
+     
     $ cf install-plugin ~/Downloads/cf-aklogin
     
 _Note: If you get `persmission denied`, run `chmod +x ~/Downloads/cf-aklogin`._
@@ -65,8 +72,16 @@ Or with your own `foo.yml`:
     2. foo
     Select profile: _
         
+### Build 
+        
+    $ make
+       
 ### Tests
 
-    $ godog
-
+    $ make test
+	
 _Note: the plugin needs to be installed for the tests to succeed!_
+    
+### Release
+
+    $ make release
