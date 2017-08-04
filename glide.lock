@@ -1,8 +1,8 @@
-hash: bef95ddb2917301835f9b3ec47d19cf7c803ec85d711aa65aba3d2c22d8a4eda
-updated: 2017-08-03T14:09:06.843736825+01:00
+hash: 260818f1cc82f49dc09e7d10ff7de200328c168cd2398dfc8b9a4cbbf12e3944
+updated: 2017-08-04T15:34:08.415588984+01:00
 imports:
 - name: code.cloudfoundry.org/cli
-  version: 3b81b97209bed77c6c75c144dd1eb282be507b72
+  version: a0a5abc4e5cad72866494aa209bb367a8cf19490
   subpackages:
   - plugin/models
 - name: github.com/cloudfoundry/cli
