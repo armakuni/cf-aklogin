@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+PLUGIN_NAME=cf-aklogin
+USER=armakuni
+TAG=v1.2.7
+DESC="$PLUGIN_NAME-release $TAG
+CF Login tool to switch between CF environments with a single command."
+
+if [ ! -d ${GOPATH}/src/github.com/aktau/github-release ];then
+	go get github.com/aktau/github-release
+fi
+
+github-release release \
+    --user ${USER} \
+    --repo ${PLUGIN_NAME} \
+    --tag ${TAG} \
+    --name ${TAG} \
+    --description "$DESC"
+#    --pre-release
+
+function generate_and_upload_artifacts() {
+	GOOS=$1 GOARCH=$2 go build -o ${PLUGIN_NAME}.$3
+	echo `shasum -a 1 ${PLUGIN_NAME}.$3`
+
+	github-release upload \
+		--user ${USER} \
+		--repo ${PLUGIN_NAME} \
+		--tag ${TAG} \
+		--name ${PLUGIN_NAME}.$3 \
+		--file ${PLUGIN_NAME}.$3
+}
+
+generate_and_upload_artifacts darwin amd64 darwin
+
+generate_and_upload_artifacts linux amd64 linux64
+
+generate_and_upload_artifacts linux 386 linux32
+
+generate_and_upload_artifacts windows amd64 win64.exe
+
+generate_and_upload_artifacts windows 386 win32.exe

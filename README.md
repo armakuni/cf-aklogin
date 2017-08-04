@@ -79,4 +79,4 @@ _Note: the plugin needs to be installed for the tests to succeed!_
     
 ### Release
 
-    $ make release
+    $ GITHUB_TOKEN=<your-token-here> make release
