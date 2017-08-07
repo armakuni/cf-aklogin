@@ -59,6 +59,7 @@ Or with your own `foo.yml`:
     OPTIONS:
        --filename       YML config file path
        --list           List available profiles
+       --version        Print version
 
     $ cf aklogin --list
     Available profiles:

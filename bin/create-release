@@ -2,9 +2,10 @@
 
 PLUGIN_NAME=cf-aklogin
 USER=armakuni
-TAG=v1.2.8
+VERSION=1.2.9
+TAG=v${VERSION}
 DESC="$PLUGIN_NAME-release $TAG
- * Mock cf-cli to increase test coverage."
+ * 100% test coverage."
 
 if [ ! -d ${GOPATH}/src/github.com/aktau/github-release ];then
 	go get github.com/aktau/github-release
@@ -13,9 +14,9 @@ fi
 cat > repo-index.yml << EOF
 - name: ${PLUGIN_NAME}
   description: CF Login tool to switch between CF environments with a single command
-  version: 1.2.8
+  version: ${VERSION}
   created: 2017-07-13T09:38:24Z
-  updated: 2017-08-07T15:04:58Z
+  updated: 2017-08-08T15:02:09Z
   company: Armakuni
   authors:
   - name: Adrian Fedoreanu
@@ -25,16 +26,18 @@ cat > repo-index.yml << EOF
   binaries:
 EOF
 
-github-release release \
-    --user ${USER} \
-    --repo ${PLUGIN_NAME} \
-    --tag ${TAG} \
-    --name ${TAG} \
-    --description "$DESC"
-#    --pre-release
+if [ ! -z ${GITHUB_TOKEN} ];then
+	github-release release \
+		--user ${USER} \
+		--repo ${PLUGIN_NAME} \
+		--tag ${TAG} \
+		--name ${TAG} \
+		--description "$DESC"
+	#    --pre-release
+fi
 
 function generate_and_upload_artifacts() {
-	GOOS=$1 GOARCH=$2 go build -o ${PLUGIN_NAME}.$3
+	GOOS=$1 GOARCH=$2 go build -o ${PLUGIN_NAME}.$3 cmd/cf-aklogin.go
 	SHA1=`shasum -a 1 ${PLUGIN_NAME}.$3 | awk '{print $1}'`
 
 	cat >> repo-index.yml << EOF
@@ -43,12 +46,14 @@ function generate_and_upload_artifacts() {
     checksum: ${SHA1}
 EOF
 
-	github-release upload \
-		--user ${USER} \
-		--repo ${PLUGIN_NAME} \
-		--tag ${TAG} \
-		--name ${PLUGIN_NAME}.$3 \
-		--file ${PLUGIN_NAME}.$3
+	if [ ! -z ${GITHUB_TOKEN} ];then
+		github-release upload \
+			--user ${USER} \
+			--repo ${PLUGIN_NAME} \
+			--tag ${TAG} \
+			--name ${PLUGIN_NAME}.$3 \
+			--file ${PLUGIN_NAME}.$3
+	fi
 }
 
 generate_and_upload_artifacts linux amd64 linux64

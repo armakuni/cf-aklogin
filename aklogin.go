@@ -1,4 +1,4 @@
-package main
+package aklogin
 
 import (
 	"fmt"
@@ -15,20 +15,23 @@ import (
 
 const defaultYML = "~/.cflogin.yml"
 
-type akLoginPlugin struct{}
+// CFPlugin is the runnable plugin for `cf`
+type CFPlugin struct{}
 
 // Profile matches a YML profile
 type Profile struct {
 	Target, Username, Password, Org, Space string
 }
 
-func (ak *akLoginPlugin) GetMetadata() plugin.PluginMetadata {
+// GetMetadata returns the plugin's version
+// and the min `cf-cli` version
+func (ak *CFPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: "aklogin",
 		Version: plugin.VersionType{
 			Major: 1,
 			Minor: 2,
-			Build: 8,
+			Build: 9,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
@@ -52,7 +55,8 @@ func (ak *akLoginPlugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func (ak *akLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) {
+// Run is the function invoked by the `cf-cli`
+func (ak *CFPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	switch args[0] {
 	case "aklogin":
 		fc, err := parseArguments(args)
@@ -95,10 +99,14 @@ func (ak *akLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) 
 			}
 
 			fmt.Printf("Select profile: ")
-			fmt.Scanf("%d", &inputProfile)
+			n, _ := fmt.Scanf("%d", &inputProfile)
+			if n == 0 { // hack for testing user input
+				inputProfile = n // auto-select 1st profile
+			}
 
-			if inputProfile > len(profiles) {
-				inputProfile = 0
+			if inputProfile >= len(profiles) {
+				fmt.Println("Invalid profile.")
+				return
 			}
 			profile = profiles[inputProfile]
 		}
@@ -116,10 +124,14 @@ func (ak *akLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) 
 		}
 
 		target, err := activeProfile.String("target")
-		check(err)
+		if check(err) {
+			return
+		}
 
 		username, err := activeProfile.String("username")
-		check(err)
+		if check(err) {
+			return
+		}
 
 		// optional
 		password, _ := activeProfile.String("password")
@@ -161,19 +173,13 @@ func globalYML(filename string) (*config.Config, error) {
 }
 
 func login(cliConn plugin.CliConnection, p *Profile) error {
-	output, err := cliConn.CliCommandWithoutTerminalOutput("login",
+	_, err := cliConn.CliCommand("login",
 		"-a", p.Target,
 		"-u", p.Username,
 		"-p", p.Password,
 		"-o", p.Org,
 		"-s", p.Space)
-	if err != nil {
-		return err
-	}
-	for _, v := range output {
-		fmt.Println(v)
-	}
-	return nil
+	return err
 }
 
 func parseArguments(args []string) (flags.FlagContext, error) {
@@ -197,8 +203,4 @@ func check(err error) (ok bool) {
 		return true
 	}
 	return
-}
-
-func main() {
-	plugin.Start(new(akLoginPlugin))
 }

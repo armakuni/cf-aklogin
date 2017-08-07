@@ -1,4 +1,4 @@
-package main
+package aklogin
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ type pluginFeature struct {
 	output string
 
 	fakeCliConnection *pluginfakes.FakeCliConnection
-	akLoginPlugin     *akLoginPlugin
+	CFPlugin          *CFPlugin
 }
 
 func (p *pluginFeature) iHaveAYMLFile(filename string, contents *gherkin.DocString) error {
@@ -30,7 +30,7 @@ func (p *pluginFeature) iHaveAYMLFile(filename string, contents *gherkin.DocStri
 
 func (p *pluginFeature) iRunCf(command string) error {
 	out := io.CaptureOutput(func() {
-		p.akLoginPlugin.Run(p.fakeCliConnection, strings.Split(command, " "))
+		p.CFPlugin.Run(p.fakeCliConnection, strings.Split(command, " "))
 	})
 	p.output = strings.Join(out, "\n")
 	return nil
@@ -61,8 +61,8 @@ func (p *pluginFeature) mySelectedOrgspaceShouldAutoassigned() (err error) {
 	return assertNotEq(currentSpace.Name, "")
 }
 
-func (p *pluginFeature) theCfakloginPluginIsInstalled() error {
-	return nil
+func (p *pluginFeature) theCFAKPluginIsInstalled() error {
+	return nil // Plugin faked
 }
 
 func (p *pluginFeature) theOutputShouldBe(expected *gherkin.DocString) error {
@@ -93,7 +93,7 @@ func assertEqStr(got, exp string) error {
 func FeatureContext(s *godog.Suite) {
 	p := &pluginFeature{
 		fakeCliConnection: new(pluginfakes.FakeCliConnection),
-		akLoginPlugin:     new(akLoginPlugin),
+		CFPlugin:          new(CFPlugin),
 	}
 
 	s.BeforeSuite(func() {
@@ -115,7 +115,7 @@ func FeatureContext(s *godog.Suite) {
 	})
 
 	s.Step(`^I have a YML file "([^"]*)":$`, p.iHaveAYMLFile)
-	s.Step(`^The cf-aklogin plugin is installed$`, p.theCfakloginPluginIsInstalled)
+	s.Step(`^The cf-aklogin plugin is installed$`, p.theCFAKPluginIsInstalled)
 	s.Step(`^I run cf "([^"]*)"$`, p.iRunCf)
 	s.Step(`^I should be logged into "([^"]*)" CF as "([^"]*)"$`, p.iShouldBeLoggedIntoCFAs)
 	s.Step(`^my selected org\/space should be "([^"]*)"\/"([^"]*)"$`, p.mySelectedOrgspaceShouldBeDevelopment)

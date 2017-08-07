@@ -1,9 +1,12 @@
 build:
-	@go build
+	@go build cmd/cf-aklogin.go
 
 deps:
 	@go get -v github.com/Masterminds/glide
 	@glide i
+
+up:
+	@glide up
 
 test:
 	@go vet
@@ -16,7 +19,7 @@ run:
 	@cf aklogin -l
 
 release:
-	@${PWD}/bin/create-release
+	@bin/create-release
 
 coverage:
 	@go tool cover -html=coverage.out

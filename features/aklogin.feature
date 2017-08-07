@@ -89,12 +89,23 @@ Feature: CF Login tool
     Select profile: Using profile: 'bar'
     """
 
+  Scenario: Invalid profile input
+    Given I have a YML file "foo.yml":
+    """
+    """
+    When I run cf "aklogin -f foo.yml -l"
+    Then the output should be:
+    """
+    Available profiles:
+    Select profile: Invalid profile.
+    """
+
   Scenario: I can print the version
     Given The cf-aklogin plugin is installed
     When I run cf "aklogin --version"
     Then the output should be:
     """
-    1.2.8
+    1.2.9
     """
 
   Scenario: Unspecified profile
@@ -154,6 +165,34 @@ Feature: CF Login tool
     Then the output should be:
     """
     Invalid flag: -xx
+    """
+
+  Scenario: Missing target
+    Given I have a YML file "foo.yml":
+    """
+    foo:
+      username: adrian.fedoreanu@armakuni.com
+      password: Pennies!20
+    """
+    When I run cf "aklogin -f foo.yml foo"
+    Then the output should be:
+    """
+    Using profile: 'foo'
+    Nonexistent map key at "target"
+    """
+
+  Scenario: Missing username
+    Given I have a YML file "foo.yml":
+    """
+    foo:
+      target: api.run.pivotal.io
+      password: Pennies!20
+    """
+    When I run cf "aklogin -f foo.yml foo"
+    Then the output should be:
+    """
+    Using profile: 'foo'
+    Nonexistent map key at "username"
     """
 
   Scenario: Invalid YML
