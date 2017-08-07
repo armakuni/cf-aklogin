@@ -1,4 +1,4 @@
-# CF Login tool [![Build Status](https://travis-ci.org/armakuni/cf-aklogin.svg?branch=master)](https://travis-ci.org/armakuni/cf-aklogin)
+# CF Login tool [![Build Status](https://travis-ci.org/armakuni/cf-aklogin.svg?branch=master)](https://travis-ci.org/armakuni/cf-aklogin) [![Go Report Card](https://goreportcard.com/badge/github.com/armakuni/cf-aklogin)](https://goreportcard.com/report/github.com/armakuni/cf-aklogin) [![codecov](https://codecov.io/gh/armakuni/cf-aklogin/branch/master/graph/badge.svg)](https://codecov.io/gh/armakuni/cf-aklogin)
 
 A tool that will allow switching between CF environments with a single command. 
 
