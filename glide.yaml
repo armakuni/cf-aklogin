@@ -1,10 +1,13 @@
 package: github.com/armakuni/cf-aklogin
 import:
-- package: github.com/cloudfoundry/cli
+- package: code.cloudfoundry.org/cli
   version: v6.29.0
   subpackages:
   - cf/flags
   - plugin
+  - plugin/models
+  - plugin/pluginfakes
+  - util/testhelpers/io
 - package: github.com/olebedev/config
 testImport:
 - package: github.com/DATA-DOG/godog

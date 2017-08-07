@@ -1,139 +1,140 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"regexp"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
+
+	"code.cloudfoundry.org/cli/plugin/models"
+	"code.cloudfoundry.org/cli/plugin/pluginfakes"
+	"code.cloudfoundry.org/cli/util/testhelpers/io"
 )
 
-type feature struct {
-	*received
-	cmdOutput []byte
+type pluginFeature struct {
+	output string
+
+	fakeCliConnection *pluginfakes.FakeCliConnection
+	akLoginPlugin     *akLoginPlugin
 }
 
-type received struct {
-	target, user, org, space string
-	login                    bool
-}
-
-func (r *received) String() string {
-	return fmt.Sprintf("login: %t, target: %s, user: %s, org: %s, space: %s",
-		r.login, r.target, r.user, r.org, r.space)
-}
-func (f *feature) iHaveAYMLFile(filename string, contents *gherkin.DocString) error {
+func (p *pluginFeature) iHaveAYMLFile(filename string, contents *gherkin.DocString) error {
 	return ioutil.WriteFile(expandTilde(filename), []byte(contents.Content), 0644)
 }
 
-func (f *feature) iRun(commands string) error {
-	command := strings.Split(commands, " ")
-	cmd := exec.Command(command[0], command[1:]...)
-	bytes, err := cmd.Output()
-	f.cmdOutput = bytes
-	return err
+func (p *pluginFeature) iRunCf(command string) error {
+	out := io.CaptureOutput(func() {
+		p.akLoginPlugin.Run(p.fakeCliConnection, strings.Split(command, " "))
+	})
+	p.output = strings.Join(out, "\n")
+	return nil
 }
 
-func (f *feature) iShouldBeLoggedIntoCFAs(target, username string) (err error) {
-	f.received, err = parseCmdOutput(f.cmdOutput)
-	err = assertEquals(f.received.login, true)
-	err = assertEquals(f.received.target, target)
-	err = assertEquals(f.received.user, username)
-	return
+func (p *pluginFeature) iShouldBeLoggedIntoCFAs(target, username string) error {
+	loggedIn, _ := p.fakeCliConnection.IsLoggedIn()
+	return assertEq(loggedIn, true)
 }
 
-func (f *feature) mySelectedOrgspaceShouldBeDevelopment(org, space string) error {
-	err := assertEquals(f.received.org, org)
-	err = assertEquals(f.received.space, space)
-	return err
+func (p *pluginFeature) mySelectedOrgspaceShouldBeDevelopment(org, space string) (err error) {
+	currentOrg, _ := p.fakeCliConnection.GetCurrentOrg()
+	err = assertEq(currentOrg.Name, org)
+	if err != nil {
+		return
+	}
+	currentSpace, _ := p.fakeCliConnection.GetCurrentSpace()
+	return assertEq(currentSpace.Name, space)
 }
 
-func (f *feature) mySelectedOrgspaceShouldAutoassigned() error {
-	err := assertNotEquals(f.received.org, "")
-	err = assertNotEquals(f.received.space, "")
-	return err
+func (p *pluginFeature) mySelectedOrgspaceShouldAutoassigned() (err error) {
+	currentOrg, _ := p.fakeCliConnection.GetCurrentOrg()
+	err = assertNotEq(currentOrg.Name, "")
+	if err != nil {
+		return
+	}
+	currentSpace, _ := p.fakeCliConnection.GetCurrentSpace()
+	return assertNotEq(currentSpace.Name, "")
 }
 
-func (f *feature) theOutputShouldBe(expected *gherkin.DocString) error {
-	return assertEqualsStr(string(f.cmdOutput), expected.Content)
+func (p *pluginFeature) theCfakloginPluginIsInstalled() error {
+	return nil
 }
 
-func assertEquals(actual, expected interface{}) error {
-	if expected != actual {
-		return fmt.Errorf("Expected '%s', but got '%s'", expected, actual)
+func (p *pluginFeature) theOutputShouldBe(expected *gherkin.DocString) error {
+	return assertEqStr(p.output, expected.Content)
+}
+
+func assertEq(got, exp interface{}) error {
+	if !reflect.DeepEqual(got, exp) {
+		return fmt.Errorf("Wanted '%v'; Got '%v'", exp, got)
 	}
 	return nil
 }
 
-func assertEqualsStr(actual, expected string) error {
-	if expected != strings.TrimRight(actual, "\n") {
-		return fmt.Errorf("Expected '%s', but got '%s'", expected, actual)
+func assertNotEq(got, exp interface{}) error {
+	if exp == got {
+		return fmt.Errorf("Wanted '%v'; Got '%v'", exp, got)
 	}
 	return nil
 }
 
-func assertNotEquals(actual, expected interface{}) error {
-	if expected == actual {
-		return fmt.Errorf("Expected '%s', but got '%s'", expected, actual)
+func assertEqStr(got, exp string) error {
+	if exp != strings.TrimRight(got, "\n") {
+		return fmt.Errorf("Wanted '%s', but got '%s'", exp, got)
 	}
 	return nil
-}
-
-func parseCmdOutput(b []byte) (*received, error) {
-	s := string(b)
-	if strings.Contains(s, "Profile not found.") {
-		return nil, errors.New("Profile not found.")
-	}
-
-	if strings.Contains(s, "is not a registered command") {
-		return nil, errors.New("Install the plugin first.")
-	}
-
-	return &received{
-		login:  regexp.MustCompile(`(?m)^Authenticating.+\nOK$`).Match(b),
-		target: extractGroupIfMatch(`http?s://([\w.]+)`, s),
-		user:   extractGroupIfMatch(`User:\s+([\w.@]+)`, s),
-		org:    extractGroupIfMatch(`Org:\s+([\w.-]+)`, s),
-		space:  extractGroupIfMatch(`Space:\s+([\w.-]+)`, s),
-	}, nil
-}
-
-func extractGroupIfMatch(regex, src string) string {
-	matches := regexp.MustCompile(regex).FindStringSubmatch(src)
-	if len(matches) >= 2 {
-		return matches[1]
-	}
-	return ""
 }
 
 func FeatureContext(s *godog.Suite) {
-	f := new(feature)
+	p := &pluginFeature{
+		fakeCliConnection: new(pluginfakes.FakeCliConnection),
+		akLoginPlugin:     new(akLoginPlugin),
+	}
 
-	s.AfterScenario(func(interface{}, error) {
-		os.Remove("foo.yml")
-		os.Remove(expandTilde("~/bar.yml"))
+	s.BeforeSuite(func() {
+		p.fakeCliConnection.IsLoggedInReturns(true, nil)
+
+		organization := plugin_models.Organization{
+			OrganizationFields: plugin_models.OrganizationFields{Name: "adrian-fedoreanu-armakuni"}}
+		p.fakeCliConnection.GetCurrentOrgReturns(organization, nil)
+
+		space := plugin_models.Space{SpaceFields: plugin_models.SpaceFields{Name: "development"}}
+		p.fakeCliConnection.GetCurrentSpaceReturns(space, nil)
 	})
 
-	s.Step(`^I have a YML file "([^"]*)":$`, f.iHaveAYMLFile)
-	s.Step(`^I run "([^"]*)"$`, f.iRun)
-	s.Step(`^I should be logged into "([^"]*)" CF as "([^"]*)"$`, f.iShouldBeLoggedIntoCFAs)
-	s.Step(`^my selected org\/space should be "([^"]*)"\/"([^"]*)"$`, f.mySelectedOrgspaceShouldBeDevelopment)
-	s.Step(`^my selected org\/space should auto-assigned$`, f.mySelectedOrgspaceShouldAutoassigned)
-	s.Step(`^the output should be:$`, f.theOutputShouldBe)
+	s.AfterScenario(func(interface{}, error) {
+		os.Remove(expandTilde("~/bar.yml"))
+		os.Remove("foo.yml")
+		os.Remove("invalid_foo.yml")
+		os.Remove("fake_2.yml")
+	})
+
+	s.Step(`^I have a YML file "([^"]*)":$`, p.iHaveAYMLFile)
+	s.Step(`^The cf-aklogin plugin is installed$`, p.theCfakloginPluginIsInstalled)
+	s.Step(`^I run cf "([^"]*)"$`, p.iRunCf)
+	s.Step(`^I should be logged into "([^"]*)" CF as "([^"]*)"$`, p.iShouldBeLoggedIntoCFAs)
+	s.Step(`^my selected org\/space should be "([^"]*)"\/"([^"]*)"$`, p.mySelectedOrgspaceShouldBeDevelopment)
+	s.Step(`^my selected org\/space should auto-assigned$`, p.mySelectedOrgspaceShouldAutoassigned)
+	s.Step(`^the output should be:$`, p.theOutputShouldBe)
 }
 
 func TestMain(m *testing.M) {
+	format := "progress"
+	for _, arg := range os.Args[1:] {
+		if arg == "-test.v=true" { // go test transforms -v option
+			format = "pretty"
+			break
+		}
+	}
 	status := godog.RunWithOptions("godog", func(s *godog.Suite) {
 		FeatureContext(s)
 	}, godog.Options{
-		Format:    "progress",
+		Format:    format,
 		Paths:     []string{"features"},
 		Randomize: time.Now().UTC().UnixNano(), // randomize scenario execution order
 	})

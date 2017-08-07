@@ -1,17 +1,30 @@
-hash: 260818f1cc82f49dc09e7d10ff7de200328c168cd2398dfc8b9a4cbbf12e3944
-updated: 2017-08-04T15:34:08.415588984+01:00
+hash: 5c9c9168c184c54ca73e712909a5096abd7470531060e2ccf5945106e42e0f15
+updated: 2017-08-07T14:17:17.920207061+01:00
 imports:
 - name: code.cloudfoundry.org/cli
-  version: a0a5abc4e5cad72866494aa209bb367a8cf19490
-  subpackages:
-  - plugin/models
-- name: github.com/cloudfoundry/cli
   version: ff886fa93fa3e056c95fe533d9681fbe6ae4c11a
   subpackages:
   - cf/flags
   - plugin
+  - plugin/models
+  - plugin/pluginfakes
+  - util/testhelpers/io
+- name: github.com/fatih/color
+  version: 42c364ba490082e4815b5222728711b3440603eb
+  repo: https://github.com/fatih/color
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+  repo: https://github.com/mattn/go-colorable
+- name: github.com/mattn/go-isatty
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/olebedev/config
   version: 142c005175618f9116a60676c4eec0b3859f4afe
+- name: golang.org/x/sys
+  version: 0b25a408a50076fbbcae6b7ac0ea5fbb0b085e79
+  repo: https://go.googlesource.com/sys
+  subpackages:
+  - unix
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
   repo: https://gopkg.in/yaml.v2

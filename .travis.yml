@@ -4,20 +4,8 @@ go:
   - 1.8.x
   - tip
 
-before_install:
-  - wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-  - echo "deb http://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
-  - sudo apt-get update
-  - sudo apt-get install -y cf-cli
-  - cf -v
-
-install:
-  - go get github.com/Masterminds/glide
-  - make deps
-  - make
-  - make install
-
 script:
+  - make deps
   - make test
 
 after_success:

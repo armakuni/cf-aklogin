@@ -7,26 +7,28 @@ import (
 	"path/filepath"
 	"sort"
 
-	"github.com/cloudfoundry/cli/cf/flags"
-	"github.com/cloudfoundry/cli/plugin"
+	"code.cloudfoundry.org/cli/cf/flags"
+	"code.cloudfoundry.org/cli/plugin"
+
 	"github.com/olebedev/config"
 )
 
-var defaultYML string
+const defaultYML = "~/.cflogin.yml"
 
-type AKLoginPlugin struct{}
+type akLoginPlugin struct{}
 
+// Profile matches a YML profile
 type Profile struct {
 	Target, Username, Password, Org, Space string
 }
 
-func (ak *AKLoginPlugin) GetMetadata() plugin.PluginMetadata {
+func (ak *akLoginPlugin) GetMetadata() plugin.PluginMetadata {
 	return plugin.PluginMetadata{
 		Name: "aklogin",
 		Version: plugin.VersionType{
 			Major: 1,
 			Minor: 2,
-			Build: 7,
+			Build: 8,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
@@ -50,22 +52,26 @@ func (ak *AKLoginPlugin) GetMetadata() plugin.PluginMetadata {
 	}
 }
 
-func (ak *AKLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) {
+func (ak *akLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 	switch args[0] {
 	case "aklogin":
 		fc, err := parseArguments(args)
-		check(err)
+		if check(err) {
+			return
+		}
 
 		if fc.IsSet("version") {
 			fmt.Printf("%d.%d.%d\n",
 				ak.GetMetadata().Version.Major,
 				ak.GetMetadata().Version.Minor,
 				ak.GetMetadata().Version.Build)
-			os.Exit(0)
+			return
 		}
 
 		yml, err := globalYML(fc.String("filename"))
-		check(err)
+		if check(err) {
+			return
+		}
 
 		var profile string
 		if len(fc.Args()) > 1 {
@@ -98,13 +104,15 @@ func (ak *AKLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) 
 		}
 
 		if profile == "" {
-			exit1("Please specify a profile.")
+			fmt.Println("Please specify a profile.")
+			return
 		}
 		fmt.Printf("Using profile: '%s'\n", profile)
 
 		activeProfile, err := yml.Get(profile)
 		if err != nil {
-			exit1("Profile not found.")
+			fmt.Println("Profile not found.")
+			return
 		}
 
 		target, err := activeProfile.String("target")
@@ -130,9 +138,13 @@ func (ak *AKLoginPlugin) Run(cliConnection plugin.CliConnection, args []string) 
 
 func globalYML(filename string) (*config.Config, error) {
 	yml, err := ioutil.ReadFile(filename)
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 	cfg, err := config.ParseYamlBytes(yml)
-	check(err)
+	if err != nil {
+		return nil, err
+	}
 
 	include, err := cfg.Get("include")
 	if err == nil {
@@ -140,8 +152,7 @@ func globalYML(filename string) (*config.Config, error) {
 		for _, path := range includes {
 			iyml, err := ioutil.ReadFile(expandTilde(path.(string)))
 			if err != nil {
-				fmt.Println(err)
-				continue
+				return nil, err
 			}
 			yml = append(append(yml, 0x0a), iyml...) // 0x0a == "\n"
 		}
@@ -167,7 +178,7 @@ func login(cliConn plugin.CliConnection, p *Profile) error {
 
 func parseArguments(args []string) (flags.FlagContext, error) {
 	fc := flags.New()
-	fc.NewStringFlagWithDefault("filename", "f", "YML config file path", defaultYML)
+	fc.NewStringFlagWithDefault("filename", "f", "YML config file path", expandTilde(defaultYML))
 	fc.NewBoolFlag("list", "l", "List available profiles")
 	fc.NewBoolFlag("version", "v", "Print version")
 	return fc, fc.Parse(args...)
@@ -180,18 +191,14 @@ func expandTilde(filename string) string {
 	return filename
 }
 
-func check(err error) {
+func check(err error) (ok bool) {
 	if err != nil {
-		exit1(err.Error())
+		fmt.Println(err)
+		return true
 	}
-}
-
-func exit1(err string) {
-	fmt.Println(err)
-	os.Exit(1)
+	return
 }
 
 func main() {
-	defaultYML = expandTilde("~/.cflogin.yml")
-	plugin.Start(new(AKLoginPlugin))
+	plugin.Start(new(akLoginPlugin))
 }

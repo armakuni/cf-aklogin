@@ -75,8 +75,6 @@ Or with your own `foo.yml`:
 
     $ make test
 	
-_Note: the plugin needs to be installed for the tests to succeed!_
-    
 ### Release
 
     $ GITHUB_TOKEN=<your-token-here> make release
