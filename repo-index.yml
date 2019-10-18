@@ -8,6 +8,9 @@
   - name: Adrian Fedoreanu
     homepage: https://github.com/armakuni
     contact: adrian.fedoreanu@armakuni.com
+  - name: Sam Bryant
+    homepage: https://github.com/armakuni
+    contact: sam.bryant@armakuni.com
   homepage: https://github.com/armakuni/cf-aklogin
   binaries:
   - platform: linux64
