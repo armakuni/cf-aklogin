@@ -12,9 +12,9 @@ import (
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/gherkin"
 
+	"code.cloudfoundry.org/cli/cf/util/testhelpers/io"
 	"code.cloudfoundry.org/cli/plugin/models"
 	"code.cloudfoundry.org/cli/plugin/pluginfakes"
-	"code.cloudfoundry.org/cli/util/testhelpers/io"
 )
 
 type pluginFeature struct {
