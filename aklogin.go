@@ -21,6 +21,7 @@ type CFPlugin struct{}
 // Profile matches a YML profile
 type Profile struct {
 	Target, Username, Password, Org, Space string
+	SSO                                    bool
 }
 
 // GetMetadata returns the plugin's version
@@ -30,8 +31,8 @@ func (ak *CFPlugin) GetMetadata() plugin.PluginMetadata {
 		Name: "aklogin",
 		Version: plugin.VersionType{
 			Major: 1,
-			Minor: 2,
-			Build: 9,
+			Minor: 3,
+			Build: 0,
 		},
 		MinCliVersion: plugin.VersionType{
 			Major: 6,
@@ -128,17 +129,21 @@ func (ak *CFPlugin) Run(cliConnection plugin.CliConnection, args []string) {
 			return
 		}
 
-		username, err := activeProfile.String("username")
-		if check(err) {
-			return
-		}
+		sso, _ := activeProfile.Bool("sso")
+		var username, password string
+		if !sso {
+			username, err = activeProfile.String("username")
+			if check(err) {
+				return
+			}
 
-		// optional
-		password, _ := activeProfile.String("password")
+			// optional
+			password, _ = activeProfile.String("password")
+		}
 		org, _ := activeProfile.String("org")
 		space, _ := activeProfile.String("space")
 
-		p := &Profile{Target: target, Username: username, Password: password, Org: org, Space: space}
+		p := &Profile{Target: target, Username: username, Password: password, Org: org, Space: space, SSO: sso}
 
 		err = login(cliConnection, p)
 		check(err)
@@ -173,12 +178,21 @@ func globalYML(filename string) (*config.Config, error) {
 }
 
 func login(cliConn plugin.CliConnection, p *Profile) error {
-	_, err := cliConn.CliCommand("login",
-		"-a", p.Target,
-		"-u", p.Username,
-		"-p", p.Password,
-		"-o", p.Org,
-		"-s", p.Space)
+	var err error
+	if p.SSO {
+		_, err = cliConn.CliCommand("login",
+			"-a", p.Target,
+			"--sso",
+			"-o", p.Org,
+			"-s", p.Space)
+	} else {
+		_, err = cliConn.CliCommand("login",
+			"-a", p.Target,
+			"-u", p.Username,
+			"-p", p.Password,
+			"-o", p.Org,
+			"-s", p.Space)
+	}
 	return err
 }
 
