@@ -2,11 +2,10 @@ build:
 	@go build cmd/cf-aklogin.go
 
 deps:
-	@go get -v github.com/Masterminds/glide
-	@glide i
+	@go mod download
 
 up:
-	@glide up
+	@go get -u ./...
 
 test:
 	@go vet
