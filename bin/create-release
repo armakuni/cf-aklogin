@@ -2,13 +2,13 @@
 
 PLUGIN_NAME=cf-aklogin
 USER=armakuni
-VERSION=1.2.9
+VERSION=1.3.0
 TAG=v${VERSION}
 DESC="$PLUGIN_NAME-release $TAG
- * 100% test coverage."
+Add SSO feature"
 
 if [ ! -d ${GOPATH}/src/github.com/aktau/github-release ];then
-	go get github.com/aktau/github-release
+  go get github.com/aktau/github-release
 fi
 
 cat > repo-index.yml << EOF
@@ -27,33 +27,33 @@ cat > repo-index.yml << EOF
 EOF
 
 if [ ! -z ${GITHUB_TOKEN} ];then
-	github-release release \
-		--user ${USER} \
-		--repo ${PLUGIN_NAME} \
-		--tag ${TAG} \
-		--name ${TAG} \
-		--description "$DESC"
-	#    --pre-release
+  github-release release \
+  --user ${USER} \
+  --repo ${PLUGIN_NAME} \
+  --tag ${TAG} \
+  --name ${TAG} \
+  --description "$DESC"
+  #    --pre-release
 fi
 
 function generate_and_upload_artifacts() {
-	GOOS=$1 GOARCH=$2 go build -o ${PLUGIN_NAME}.$3 cmd/cf-aklogin.go
-	SHA1=`shasum -a 1 ${PLUGIN_NAME}.$3 | awk '{print $1}'`
-
+  GOOS=$1 GOARCH=$2 go build -o ${PLUGIN_NAME}.$3 cmd/cf-aklogin.go
+  SHA1=`shasum -a 1 ${PLUGIN_NAME}.$3 | awk '{print $1}'`
+  
 	cat >> repo-index.yml << EOF
   - platform: $3
     url: https://github.com/${USER}/${PLUGIN_NAME}/releases/download/${TAG}/${PLUGIN_NAME}.$3
     checksum: ${SHA1}
 EOF
-
-	if [ ! -z ${GITHUB_TOKEN} ];then
-		github-release upload \
-			--user ${USER} \
-			--repo ${PLUGIN_NAME} \
-			--tag ${TAG} \
-			--name ${PLUGIN_NAME}.$3 \
-			--file ${PLUGIN_NAME}.$3
-	fi
+  
+  if [ ! -z ${GITHUB_TOKEN} ];then
+    github-release upload \
+    --user ${USER} \
+    --repo ${PLUGIN_NAME} \
+    --tag ${TAG} \
+    --name ${PLUGIN_NAME}.$3 \
+    --file ${PLUGIN_NAME}.$3
+  fi
 }
 
 generate_and_upload_artifacts linux amd64 linux64
