@@ -4,8 +4,8 @@ go 1.13
 
 require (
 	code.cloudfoundry.org/cli v6.47.0+incompatible
-	github.com/DATA-DOG/godog v0.7.13
 	github.com/aktau/github-release v0.7.2 // indirect
+	github.com/cucumber/godog v0.8.1
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect

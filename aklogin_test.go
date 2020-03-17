@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/godog"
-	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/gherkin"
 
 	"code.cloudfoundry.org/cli/cf/util/testhelpers/io"
 	"code.cloudfoundry.org/cli/plugin/models"
