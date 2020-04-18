@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/gherkin"
+	"github.com/cucumber/messages-go/v10"
 
 	"code.cloudfoundry.org/cli/cf/util/testhelpers/io"
 	"code.cloudfoundry.org/cli/plugin/models"
@@ -24,7 +24,7 @@ type pluginFeature struct {
 	CFPlugin          *CFPlugin
 }
 
-func (p *pluginFeature) iHaveAYMLFile(filename string, contents *gherkin.DocString) error {
+func (p *pluginFeature) iHaveAYMLFile(filename string, contents *messages.PickleStepArgument_PickleDocString) error {
 	return ioutil.WriteFile(expandTilde(filename), []byte(contents.Content), 0644)
 }
 
@@ -65,7 +65,7 @@ func (p *pluginFeature) theCFAKPluginIsInstalled() error {
 	return nil // Plugin faked
 }
 
-func (p *pluginFeature) theOutputShouldBe(expected *gherkin.DocString) error {
+func (p *pluginFeature) theOutputShouldBe(expected *messages.PickleStepArgument_PickleDocString) error {
 	return assertEqStr(p.output, expected.Content)
 }
 
@@ -107,7 +107,7 @@ func FeatureContext(s *godog.Suite) {
 		p.fakeCliConnection.GetCurrentSpaceReturns(space, nil)
 	})
 
-	s.AfterScenario(func(interface{}, error) {
+	s.AfterScenario(func(pickle *messages.Pickle, err error) {
 		os.Remove(expandTilde("~/bar.yml"))
 		os.Remove("foo.yml")
 		os.Remove("invalid_foo.yml")
