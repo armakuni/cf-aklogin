@@ -1,5 +1,6 @@
 code.cloudfoundry.org/cli v6.50.0+incompatible h1:/oA1hcI5gs8BhD5Nxt8g7KlT4IC+GYZmtka/ycnqsSc=
 code.cloudfoundry.org/cli v6.50.0+incompatible/go.mod h1:e4d+EpbwevNhyTZKybrLlyTvpH+W22vMsmdmcTxs/Fo=
+code.cloudfoundry.org/cli v6.53.0+incompatible/go.mod h1:e4d+EpbwevNhyTZKybrLlyTvpH+W22vMsmdmcTxs/Fo=
 github.com/aslakhellesoy/gox v1.0.100/go.mod h1:AJl542QsKKG96COVsv0N74HHzVQgDIQPceVUh1aeU2M=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/cucumber/gherkin-go/v11 v11.0.0 h1:cwVwN1Qn2VRSfHZNLEh5x00tPBmZcjATBWDpxsR5Xug=
