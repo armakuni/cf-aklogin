@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	code.cloudfoundry.org/cli v6.50.0+incompatible
-	github.com/cucumber/godog v0.10.0
+	github.com/cucumber/godog v0.11.0
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.3.2 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
